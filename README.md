@@ -2,9 +2,20 @@
 
 An extension for [SwarmUI](https://github.com/mcmonkeyprojects/SwarmUI) to use [ComfyDeploy](https://www.comfydeploy.com/) as a backend.
 
-This requires you have a valid ComfyDeploy account with API authorization token, a valid machine with machine_id to use, and a workflow registered to take a dynamic workflow as `workflow_api` input, and models on the server that match your local models.
+This requires you have a valid paid ComfyDeploy account with API authorization token, a valid machine with machine_id to use, and a workflow registered to take a dynamic workflow as `workflow_api` input, and models on the server that match your local models.
 
 This is an initial/experimental implementation.
+
+## Usage
+
+- Clone this into `(Swarm)/src/Extension`
+- Run Swarm updater (to trigger a recompile) and launch Swarm
+- go to Server->Backends
+- add a `ComfyDeploy` backend
+- fill in your auth token, machine id, workflow id
+- save
+- maybe disable your other backends to prevent mixups
+- go to the generate tab and generate some things
 
 # License
 

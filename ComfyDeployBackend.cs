@@ -65,7 +65,7 @@ public class ComfyDeployBackend : AbstractT2IBackend
             try
             {
                 JObject getResult = await Send(HttpMethod.Get, $"https://www.comfydeploy.com/api/run?run_id={runId}");
-                Logs.Debug($"[ComfyDeploy] Response: {getResult?.ToDenseDebugString()}");
+                Logs.Verbose($"[ComfyDeploy] Response: {getResult?.ToDenseDebugString()}");
                 string status = $"{getResult["status"]}";
                 if (status != lastStatus || ticks++ == 20)
                 {
@@ -80,7 +80,17 @@ public class ComfyDeployBackend : AbstractT2IBackend
                 List<Task> downloads = [];
                 foreach (JToken output in getResult["outputs"])
                 {
-                    foreach (JToken img in output["data"]["images"])
+                    JObject dataTok = output["data"] as JObject;
+                    if (dataTok.TryGetValue("exception_message", out JToken err))
+                    {
+                        Logs.Debug($"[ComfyDeploy] Error: {getResult["outputs"]}");
+                        if (dataTok.TryGetValue("traceback", out JToken traceback))
+                        {
+                            Logs.Error($"[ComfyDeploy] Error {dataTok["exception_type"]}: {err} ... Traceback:\n{traceback.JoinString("\n")}");
+                        }
+                        throw new SwarmReadableErrorException($"ComfyDeploy comfy backend error: {dataTok["exception_type"]}: {err}");
+                    }
+                    foreach (JToken img in dataTok["images"])
                     {
                         string fname = $"{img["filename"]}";
                         string ext = fname.AfterLast('.');
@@ -102,7 +112,7 @@ public class ComfyDeployBackend : AbstractT2IBackend
             }
             catch (Exception ex)
             {
-                Logs.Error($"[ComfyDeploy] Error: {ex}");
+                Logs.Error($"[ComfyDeploy] Error: {ex.ReadableString()}");
                 throw;
             }
         }

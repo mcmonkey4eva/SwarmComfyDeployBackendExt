@@ -62,41 +62,49 @@ public class ComfyDeployBackend : AbstractT2IBackend
         while (true)
         {
             await Task.Delay(TimeSpan.FromSeconds(0.5), Program.GlobalProgramCancel);
-            JObject getResult = await Send(HttpMethod.Get, $"https://www.comfydeploy.com/api/run?run_id={runId}");
-            string status = $"{getResult["status"]}";
-            if (status != lastStatus || ticks++ == 20)
+            try
             {
-                Logs.Verbose($"[ComfyDeploy] Status: {status}");
-                lastStatus = status;
-                ticks = 0;
-            }
-            if (getResult["ended_at"].Type == JTokenType.Null)
-            {
-                continue;
-            }
-            List<Task> downloads = [];
-            foreach (JToken output in getResult["outputs"])
-            {
-                foreach (JToken img in output["data"]["images"])
+                JObject getResult = await Send(HttpMethod.Get, $"https://www.comfydeploy.com/api/run?run_id={runId}");
+                Logs.Debug($"[ComfyDeploy] Response: {getResult?.ToDenseDebugString()}");
+                string status = $"{getResult["status"]}";
+                if (status != lastStatus || ticks++ == 20)
                 {
-                    string fname = $"{img["filename"]}";
-                    string ext = fname.AfterLast('.');
-                    string url = $"{img["url"]}";
-                    downloads.Add(Task.Run(async () =>
-                    {
-                        HttpResponseMessage response = await Utilities.UtilWebClient.GetAsync(url);
-                        response.EnsureSuccessStatusCode();
-                        byte[] data = await response.Content.ReadAsByteArrayAsync();
-                        takeOutput(new Image(data, Image.ImageType.IMAGE, string.IsNullOrWhiteSpace(ext) ? "png" : ext));
-                    }));
+                    Logs.Verbose($"[ComfyDeploy] Status: {status}");
+                    lastStatus = status;
+                    ticks = 0;
                 }
+                if (getResult["ended_at"].Type == JTokenType.Null)
+                {
+                    continue;
+                }
+                List<Task> downloads = [];
+                foreach (JToken output in getResult["outputs"])
+                {
+                    foreach (JToken img in output["data"]["images"])
+                    {
+                        string fname = $"{img["filename"]}";
+                        string ext = fname.AfterLast('.');
+                        string url = $"{img["url"]}";
+                        downloads.Add(Task.Run(async () =>
+                        {
+                            HttpResponseMessage response = await Utilities.UtilWebClient.GetAsync(url);
+                            response.EnsureSuccessStatusCode();
+                            byte[] data = await response.Content.ReadAsByteArrayAsync();
+                            takeOutput(new Image(data, Image.ImageType.IMAGE, string.IsNullOrWhiteSpace(ext) ? "png" : ext));
+                        }));
+                    }
+                }
+                if (downloads.Any())
+                {
+                    await Task.WhenAll(downloads);
+                }
+                break;
             }
-            if (downloads.Any())
+            catch (Exception ex)
             {
-                await Task.WhenAll(downloads);
+                Logs.Error($"[ComfyDeploy] Error: {ex}");
+                throw;
             }
-            Logs.Debug($"[ComfyDeploy] Response: {getResult.ToDenseDebugString()}");
-            break;
         }
     }
 

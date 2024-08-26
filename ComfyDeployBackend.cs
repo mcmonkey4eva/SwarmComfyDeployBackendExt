@@ -48,11 +48,21 @@ public class ComfyDeployBackend : AbstractT2IBackend
     public override async Task GenerateLive(T2IParamInput user_input, string batchId, Action<object> takeOutput)
     {
         string workflow = ComfyUIAPIAbstractBackend.CreateWorkflow(user_input, w => w, "/", Features);
+        JObject workflowObj = JObject.Parse(workflow);
+        // Backup for custom workflows since those usually contain SwarmSaveImageWS
+        foreach (JToken node in workflowObj.Values())
+        {
+            if (node is JObject nodeObj && nodeObj.TryGetValue("class_type", out JToken ctype) && $"{ctype}" == "SwarmSaveImageWS")
+            {
+                node["class_type"] = "SaveImage";
+                node["inputs"]["filename_prefix"] = "swarmcomfydeploy_";
+            }
+        }
         JObject payload = new()
         {
             ["workflow_id"] = Settings.WorkflowID,
             ["machine_id"] = Settings.MachineID,
-            ["workflow_api"] = JObject.Parse(workflow)
+            ["workflow_api"] = workflowObj
         };
         Logs.Verbose($"[ComfyDeploy] send request: {payload.ToDenseDebugString()}");
         JObject response = await Send(HttpMethod.Post, Settings.APIEndPoint, payload);

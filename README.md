@@ -8,8 +8,7 @@ This is an initial/experimental implementation.
 
 ## Usage
 
-- Clone this into `(Swarm)/src/Extension`
-- Run Swarm updater (to trigger a recompile) and launch Swarm
+- Install via the Swarm Server->Extensions tab
 - go to Server->Backends
 - add a `ComfyDeploy` backend
 - fill in your auth token, machine id, workflow id

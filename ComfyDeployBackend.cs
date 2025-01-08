@@ -141,7 +141,7 @@ public class ComfyDeployBackend : AbstractT2IBackend
         return [.. images];
     }
 
-    public override async Task<bool> LoadModel(T2IModel model)
+    public override async Task<bool> LoadModel(T2IModel model, T2IParamInput input)
     {
         // TODO: Validate model is on server?
         CurrentModelName = model.Name;

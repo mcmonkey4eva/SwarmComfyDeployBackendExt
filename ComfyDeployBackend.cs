@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using SwarmUI.Backends;
 using SwarmUI.Builtin_ComfyUIBackend;
 using SwarmUI.Core;
+using SwarmUI.Media;
 using SwarmUI.Text2Image;
 using SwarmUI.Utils;
 using System.Net.Http;
@@ -110,7 +111,7 @@ public class ComfyDeployBackend : AbstractT2IBackend
                             HttpResponseMessage response = await Utilities.UtilWebClient.GetAsync(url);
                             response.EnsureSuccessStatusCode();
                             byte[] data = await response.Content.ReadAsByteArrayAsync();
-                            takeOutput(new Image(data, Image.ImageType.IMAGE, string.IsNullOrWhiteSpace(ext) ? "png" : ext));
+                            takeOutput(new Image(data, MediaType.GetByExtension(string.IsNullOrWhiteSpace(ext) ? "png" : ext)));
                         }));
                     }
                 }

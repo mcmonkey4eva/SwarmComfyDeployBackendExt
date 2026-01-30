@@ -6,6 +6,10 @@ This requires you have a valid paid ComfyDeploy account with API authorization t
 
 This is an initial/experimental implementation.
 
+## Status
+
+Due to Comfy Deploy's announced shutdown, this extension is no longer maintained.
+
 ## Usage
 
 - Install via the Swarm Server->Extensions tab
